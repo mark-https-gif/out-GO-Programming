@@ -7,6 +7,7 @@ import (
 	"github.com/out-lang/out/internal/ast"
 	"github.com/out-lang/out/internal/env"
 	"github.com/out-lang/out/internal/lexer"
+	"github.com/out-lang/out/internal/libs"
 	"github.com/out-lang/out/internal/object"
 	"github.com/out-lang/out/internal/parser"
 )
@@ -154,9 +155,18 @@ func evalImport(node *ast.ImportStatement, e *env.Environment) object.Object {
 	if _, ok := registry.Lookup(path); ok {
 		return NULL
 	}
+
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return newError("cannot import '%s': %s", path, err.Error())
+		if libPath, ok := libs.Find(path); ok {
+			data, err = os.ReadFile(libPath)
+			if err != nil {
+				return newError("cannot import '%s': %s", path, err.Error())
+			}
+			path = libPath
+		} else {
+			return newError("cannot import '%s': %s", path, err.Error())
+		}
 	}
 	l := lexer.New(string(data))
 	p := parser.New(l)

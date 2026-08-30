@@ -8,6 +8,7 @@ import (
 	"github.com/out-lang/out/internal/env"
 	"github.com/out-lang/out/internal/eval"
 	"github.com/out-lang/out/internal/lexer"
+	"github.com/out-lang/out/internal/libs"
 	"github.com/out-lang/out/internal/object"
 	"github.com/out-lang/out/internal/parser"
 )
@@ -38,6 +39,20 @@ func main() {
 				os.Exit(1)
 			}
 			compileFile(os.Args[2], outArg(os.Args, 3))
+		case "get":
+			if len(os.Args) < 3 {
+				fmt.Println("Usage: out get <library>")
+				fmt.Println("  out get random")
+				fmt.Println("  out get user/repo/lib")
+				fmt.Println("  out get https://example.com/lib.out")
+				os.Exit(1)
+			}
+			if err := libs.Get(os.Args[2]); err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+				os.Exit(1)
+			}
+		case "libs":
+			libs.List()
 		default:
 			runFile(os.Args[1])
 		}
@@ -89,9 +104,11 @@ func compileFile(filename, output string) {
 	p := parser.New(l)
 	p.ParseProgram()
 	if len(p.Errors()) != 0 {
-		for _, msg := range p.Errors() {
-			fmt.Fprintf(os.Stderr, "Parse error: %s\n", msg)
+		fmt.Fprintf(os.Stderr, "Compilation failed: %d error(s)\n\n", len(p.Errors()))
+		for i, msg := range p.Errors() {
+			fmt.Fprintf(os.Stderr, "  %d) %s\n", i+1, msg)
 		}
+		fmt.Fprintf(os.Stderr, "\nFile: %s\n", filename)
 		os.Exit(1)
 	}
 
@@ -165,16 +182,20 @@ func printHelp() {
 OUT Language ` + VERSION + `
 
 Usage:
-  out                     Start REPL
-  out run <file.out>      Run a file
-  out <file.out>          Run a file (shorthand)
-  out compile <file> [o]  Compile to standalone .exe
-  out --version           Show version
-  out --help              Show this help
+  out                        Start REPL
+  out run <file.out>        Run a file
+  out <file.out>            Run a file (shorthand)
+  out compile <file> [o]    Compile to standalone .exe
+  out get <library>         Download library from GitHub
+  out libs                  List installed libraries
+  out --version             Show version
+  out --help                Show this help
 
-Example:
+Examples:
   out run hello.out
-  out compile hello.out  ->  hello.exe`
+  out compile hello.out  ->  hello.exe
+  out get random
+  out get user/repo/lib`
 	fmt.Println(help)
 }
 
