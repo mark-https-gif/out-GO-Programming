@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 
@@ -12,6 +13,9 @@ import (
 )
 
 const VERSION = "v0.4.0"
+
+const outEmbedMarker = "\n__OUT_EMBED_START__\n"
+const outEmbedEndMarker = "\n__OUT_EMBED_END__\n"
 
 func main() {
 	if len(os.Args) > 1 {
@@ -28,6 +32,12 @@ func main() {
 				os.Exit(1)
 			}
 			runFile(os.Args[2])
+		case "compile":
+			if len(os.Args) < 3 {
+				fmt.Println("Usage: out compile <file.out> [output.exe]")
+				os.Exit(1)
+			}
+			compileFile(os.Args[2], outArg(os.Args, 3))
 		default:
 			runFile(os.Args[1])
 		}
@@ -36,18 +46,86 @@ func main() {
 	}
 }
 
-func printHelp() {
-	fmt.Println(`OUT Language ` + VERSION + `
+func outArg(args []string, i int) string {
+	if len(args) > i {
+		return args[i]
+	}
+	return ""
+}
 
-Usage:
-  out                     Start REPL
-  out run <file.out>      Run a file
-  out <file.out>          Run a file (shorthand)
-  out --version           Show version
-  out --help              Show this help
+func embeddedScript() (string, bool) {
+	self, err := os.Executable()
+	if err != nil {
+		return "", false
+	}
+	data, err := os.ReadFile(self)
+	if err != nil {
+		return "", false
+	}
+	idx := bytes.Index(data, []byte(outEmbedMarker))
+	if idx < 0 {
+		return "", false
+	}
+	script := data[idx+len(outEmbedMarker):]
+	trim := bytes.TrimSuffix(script, []byte(outEmbedEndMarker))
+	script = trim
+	if len(script) == 0 {
+		return "", false
+	}
+	return string(script), true
+}
 
-Example:
-  out run hello.out`)
+func compileFile(filename, output string) {
+	if output == "" {
+		output = stripExt(filename) + ".exe"
+	}
+	script, err := os.ReadFile(filename)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error reading file: %s\n", err)
+		os.Exit(1)
+	}
+
+	l := lexer.New(string(script))
+	p := parser.New(l)
+	p.ParseProgram()
+	if len(p.Errors()) != 0 {
+		for _, msg := range p.Errors() {
+			fmt.Fprintf(os.Stderr, "Parse error: %s\n", msg)
+		}
+		os.Exit(1)
+	}
+
+	self, err := os.Executable()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+		os.Exit(1)
+	}
+	engine, err := os.ReadFile(self)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error reading engine: %s\n", err)
+		os.Exit(1)
+	}
+
+	var buf bytes.Buffer
+	buf.Write(engine)
+	buf.WriteString(outEmbedMarker)
+	buf.Write(script)
+	buf.WriteString(outEmbedEndMarker)
+
+	if err := os.WriteFile(output, buf.Bytes(), 0755); err != nil {
+		fmt.Fprintf(os.Stderr, "Error writing: %s\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("compiled: %s\n", output)
+}
+
+func stripExt(name string) string {
+	for i := len(name) - 1; i >= 0; i-- {
+		if name[i] == '.' {
+			return name[:i]
+		}
+	}
+	return name
 }
 
 func runFile(filename string) {
@@ -56,8 +134,11 @@ func runFile(filename string) {
 		fmt.Fprintf(os.Stderr, "Error reading file: %s\n", err)
 		os.Exit(1)
 	}
+	runSource(string(data), filename)
+}
 
-	l := lexer.New(string(data))
+func runSource(src, name string) {
+	l := lexer.New(src)
 	p := parser.New(l)
 	program := p.ParseProgram()
 
@@ -77,6 +158,24 @@ func runFile(filename string) {
 			os.Exit(1)
 		}
 	}
+}
+
+func printHelp() {
+	const help = `
+OUT Language ` + VERSION + `
+
+Usage:
+  out                     Start REPL
+  out run <file.out>      Run a file
+  out <file.out>          Run a file (shorthand)
+  out compile <file> [o]  Compile to standalone .exe
+  out --version           Show version
+  out --help              Show this help
+
+Example:
+  out run hello.out
+  out compile hello.out  ->  hello.exe`
+	fmt.Println(help)
 }
 
 func runRepl() {

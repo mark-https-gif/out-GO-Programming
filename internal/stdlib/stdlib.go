@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/out-lang/out/internal/dev"
 	"github.com/out-lang/out/internal/module"
 	"github.com/out-lang/out/internal/object"
 )
@@ -26,6 +27,13 @@ func RegisterAll(reg *module.Registry) {
 	reg.Register(filesModule())
 	reg.Register(mathModule())
 	reg.Register(timeModule())
+	reg.Register(dev.Module())
+	reg.Register(randomModule())
+	reg.Register(consoleModule())
+	reg.Register(shellModule())
+	reg.Register(arrayModule())
+	reg.Register(dictModule())
+	reg.Register(loggingModule())
 }
 
 func osModule() *module.Module {
