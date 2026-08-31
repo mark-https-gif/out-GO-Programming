@@ -45,29 +45,45 @@ func (l *Lexer) skipWhitespace() {
 }
 
 func (l *Lexer) skipComment() {
-	if l.ch == '/' && l.peekChar() == '/' {
-		for l.ch != '\n' && l.ch != 0 {
-			l.readChar()
-		}
-		if l.ch == '\n' {
-			l.readChar()
-		}
-		return
-	}
-	if l.ch == '/' && l.peekChar() == '*' {
-		l.readChar()
-		l.readChar()
-		for {
-			if l.ch == 0 {
-				return
-			}
-			if l.ch == '*' && l.peekChar() == '/' {
+	for {
+		if l.ch == '#' {
+			for l.ch != '\n' && l.ch != 0 {
 				l.readChar()
-				l.readChar()
-				return
 			}
-			l.readChar()
+			if l.ch == '\n' {
+				l.readChar()
+			}
+			l.skipWhitespace()
+			continue
 		}
+		if l.ch == '/' && l.peekChar() == '/' {
+			for l.ch != '\n' && l.ch != 0 {
+				l.readChar()
+			}
+			if l.ch == '\n' {
+				l.readChar()
+			}
+			l.skipWhitespace()
+			continue
+		}
+		if l.ch == '/' && l.peekChar() == '*' {
+			l.readChar()
+			l.readChar()
+			for {
+				if l.ch == 0 {
+					break
+				}
+				if l.ch == '*' && l.peekChar() == '/' {
+					l.readChar()
+					l.readChar()
+					break
+				}
+				l.readChar()
+			}
+			l.skipWhitespace()
+			continue
+		}
+		break
 	}
 }
 

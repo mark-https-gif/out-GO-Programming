@@ -209,6 +209,9 @@ func runFile(filename string) {
 }
 
 func decodeUTF16(data []byte) string {
+	if len(data) >= 3 && data[0] == 0xEF && data[1] == 0xBB && data[2] == 0xBF {
+		data = data[3:]
+	}
 	if len(data) < 2 {
 		return string(data)
 	}
