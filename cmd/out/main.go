@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"unicode/utf16"
 
 	"github.com/out-lang/out/internal/env"
 	"github.com/out-lang/out/internal/eval"
@@ -203,7 +204,36 @@ func runFile(filename string) {
 		fmt.Fprintf(os.Stderr, "Error reading file: %s\n", err)
 		os.Exit(1)
 	}
-	runSource(string(data), filename)
+	src := decodeUTF16(data)
+	runSource(src, filename)
+}
+
+func decodeUTF16(data []byte) string {
+	if len(data) < 2 {
+		return string(data)
+	}
+	if data[0] == 0xFF && data[1] == 0xFE {
+		u16 := make([]uint16, (len(data)-2)/2)
+		for i := range u16 {
+			u16[i] = uint16(data[2+i*2]) | uint16(data[3+i*2])<<8
+		}
+		return string(utf16.Decode(u16))
+	}
+	if data[0] == 0xFE && data[1] == 0xFF {
+		u16 := make([]uint16, (len(data)-2)/2)
+		for i := range u16 {
+			u16[i] = uint16(data[2+i*2])<<8 | uint16(data[3+i*2])
+		}
+		return string(utf16.Decode(u16))
+	}
+	if len(data) >= 2 && data[1] == 0x00 {
+		u16 := make([]uint16, len(data)/2)
+		for i := range u16 {
+			u16[i] = uint16(data[i*2]) | uint16(data[i*2+1])<<8
+		}
+		return string(utf16.Decode(u16))
+	}
+	return string(data)
 }
 
 func runSource(src, name string) {
