@@ -12,10 +12,13 @@ import (
 const (
 	LibsDir     = "libs"
 	GitHubBase  = "https://raw.githubusercontent.com"
-	OutLibsRepo = "out-lang/libs/main"
+	OutLibsRepo = "mark-https-gif/out-GO-Programming/main/libs"
 )
 
 func GetLibsDir() string {
+	if _, err := os.Stat(LibsDir); err == nil {
+		return LibsDir
+	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return LibsDir

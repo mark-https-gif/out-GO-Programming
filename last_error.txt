@@ -1,0 +1,4 @@
+File: test_syntax_error.out
+Errors: 1
+
+1) line 4:1 - no prefix parse function for } found

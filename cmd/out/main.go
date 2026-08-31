@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/out-lang/out/internal/env"
 	"github.com/out-lang/out/internal/eval"
@@ -13,7 +14,7 @@ import (
 	"github.com/out-lang/out/internal/parser"
 )
 
-const VERSION = "v0.4.0"
+const VERSION = "v0.5.0"
 
 const outEmbedMarker = "\n__OUT_EMBED_START__\n"
 const outEmbedEndMarker = "\n__OUT_EMBED_END__\n"
@@ -53,11 +54,21 @@ func main() {
 			}
 		case "libs":
 			libs.List()
+		case "errors":
+			if len(os.Args) < 3 {
+				fmt.Println("Usage: out errors <file.out>")
+				os.Exit(1)
+			}
+			showErrors(os.Args[2])
 		default:
 			runFile(os.Args[1])
 		}
 	} else {
-		runRepl()
+		if script, ok := embeddedScript(); ok {
+			runSource(script, "embedded")
+		} else {
+			runRepl()
+		}
 	}
 }
 
@@ -77,13 +88,22 @@ func embeddedScript() (string, bool) {
 	if err != nil {
 		return "", false
 	}
-	idx := bytes.Index(data, []byte(outEmbedMarker))
-	if idx < 0 {
+	marker := []byte(outEmbedMarker)
+	firstIdx := bytes.Index(data, marker)
+	if firstIdx < 0 {
 		return "", false
 	}
-	script := data[idx+len(outEmbedMarker):]
-	trim := bytes.TrimSuffix(script, []byte(outEmbedEndMarker))
-	script = trim
+	secondIdx := bytes.Index(data[firstIdx+len(marker):], marker)
+	if secondIdx < 0 {
+		return "", false
+	}
+	start := firstIdx + len(marker) + secondIdx + len(marker)
+	endMarker := []byte(outEmbedEndMarker)
+	endIdx := bytes.Index(data[start:], endMarker)
+	if endIdx < 0 {
+		return "", false
+	}
+	script := data[start : start+endIdx]
 	if len(script) == 0 {
 		return "", false
 	}
@@ -145,6 +165,38 @@ func stripExt(name string) string {
 	return name
 }
 
+func showErrors(filename string) {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+		os.Exit(1)
+	}
+
+	l := lexer.New(string(data))
+	p := parser.New(l)
+	p.ParseProgram()
+
+	if len(p.Errors()) == 0 {
+		fmt.Println("No errors found.")
+		return
+	}
+
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("File: %s\n", filename))
+	sb.WriteString(fmt.Sprintf("Errors: %d\n\n", len(p.Errors())))
+
+	for i, msg := range p.Errors() {
+		sb.WriteString(fmt.Sprintf("%d) %s\n", i+1, msg))
+	}
+
+	fmt.Print(sb.String())
+
+	clipboard := sb.String()
+	if err := os.WriteFile("last_error.txt", []byte(clipboard), 0644); err == nil {
+		fmt.Println("\n[Saved to last_error.txt]")
+	}
+}
+
 func runFile(filename string) {
 	data, err := os.ReadFile(filename)
 	if err != nil {
@@ -186,6 +238,7 @@ Usage:
   out run <file.out>        Run a file
   out <file.out>            Run a file (shorthand)
   out compile <file> [o]    Compile to standalone .exe
+  out errors <file.out>     Show compilation errors (copyable)
   out get <library>         Download library from GitHub
   out libs                  List installed libraries
   out --version             Show version
@@ -194,8 +247,8 @@ Usage:
 Examples:
   out run hello.out
   out compile hello.out  ->  hello.exe
-  out get random
-  out get user/repo/lib`
+  out errors script.out  ->  shows errors + saves to last_error.txt
+  out get random`
 	fmt.Println(help)
 }
 

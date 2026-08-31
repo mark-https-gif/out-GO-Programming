@@ -10,6 +10,7 @@ import (
 	"github.com/out-lang/out/internal/libs"
 	"github.com/out-lang/out/internal/object"
 	"github.com/out-lang/out/internal/parser"
+	"github.com/out-lang/out/internal/stdlib"
 )
 
 var (
@@ -17,6 +18,27 @@ var (
 	TRUE  = &object.Boolean{Value: true}
 	FALSE = &object.Boolean{Value: false}
 )
+
+func init() {
+	stdlib.SetFuncCaller(func(fn object.Object, args []object.Object) object.Object {
+		function, ok := fn.(*object.Function)
+		if !ok {
+			return NULL
+		}
+		outer, _ := function.Env.(*env.Environment)
+		childEnv := env.NewEnclosed(outer)
+		for i, arg := range args {
+			if i < len(function.Parameters) {
+				childEnv.Set(function.Parameters[i].Value, arg)
+			}
+		}
+		result := Eval(function.Body, childEnv)
+		if rv, ok := result.(*object.ReturnValue); ok {
+			return rv.Value
+		}
+		return result
+	})
+}
 
 func Eval(node ast.Node, e *env.Environment) object.Object {
 	switch node := node.(type) {
