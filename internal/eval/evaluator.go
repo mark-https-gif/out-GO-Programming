@@ -90,12 +90,15 @@ func Eval(node ast.Node, e *env.Environment) object.Object {
 			return left
 		}
 		right := Eval(node.Right, e)
-		if isError(right) {
-			return right
-		}
 		return evalInfixExpression(node.Operator, left, right)
 	case *ast.IfExpression:
 		return evalIfExpression(node, e)
+	case *ast.TryExpression:
+		return evalTryExpression(node, e)
+	case *ast.ThrowExpression:
+		return evalThrowExpression(node, e)
+	case *ast.SafeAccess:
+		return evalSafeAccess(node, e)
 	case *ast.WhileExpression:
 		return evalWhileExpression(node, e)
 	case *ast.ForExpression:
@@ -112,9 +115,6 @@ func Eval(node ast.Node, e *env.Environment) object.Object {
 			return function
 		}
 		args := evalExpressions(node.Arguments, e)
-		if len(args) == 1 && isError(args[0]) {
-			return args[0]
-		}
 		return applyFunction(function, args)
 	case *ast.ArrayLiteral:
 		elems := evalExpressions(node.Elements, e)
@@ -264,6 +264,10 @@ func evalInfixExpression(operator string, left, right object.Object) object.Obje
 		return evalFloatInfixExpressionRaw(operator, lv, rv)
 	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
 		return evalStringInfixExpression(operator, left, right)
+	case left.Type() == object.STRING_OBJ && operator == "+":
+		return &object.String{Value: left.Inspect() + right.Inspect()}
+	case operator == "+" && right.Type() == object.STRING_OBJ:
+		return &object.String{Value: left.Inspect() + right.Inspect()}
 	case operator == "==":
 		return nativeBoolToBooleanObject(left == right)
 	case operator == "!=":
@@ -376,6 +380,50 @@ func evalIfExpression(node *ast.IfExpression, e *env.Environment) object.Object 
 		return Eval(node.Consequence, e)
 	} else if node.Alternative != nil {
 		return Eval(node.Alternative, e)
+	}
+	return NULL
+}
+
+func evalTryExpression(node *ast.TryExpression, e *env.Environment) object.Object {
+	result := Eval(node.TryBlock, e)
+	if result != nil && node.CatchVar != nil && result.Type() == object.ERROR_OBJ {
+		catchEnv := env.NewEnclosed(e)
+		catchEnv.Set(node.CatchVar.Value, result)
+		catchResult := Eval(node.CatchBlock, catchEnv)
+		if catchResult != nil && catchResult.Type() == object.ERROR_OBJ {
+			return catchResult
+		}
+		return NULL
+	}
+	return result
+}
+
+func evalThrowExpression(node *ast.ThrowExpression, e *env.Environment) object.Object {
+	val := Eval(node.ReturnValue, e)
+	if isError(val) {
+		return val
+	}
+	if str, ok := val.(*object.String); ok {
+		return &object.Error{Message: str.Value}
+	}
+	return &object.Error{Message: val.Inspect()}
+}
+
+func evalSafeAccess(node *ast.SafeAccess, e *env.Environment) object.Object {
+	obj := Eval(node.Object, e)
+	if obj == nil || obj == NULL {
+		return NULL
+	}
+	if isError(obj) {
+		return NULL
+	}
+	if h, ok := obj.(*object.Hash); ok {
+		key := &object.String{Value: node.Member}
+		hashKey := object.HashKey(key)
+		if pair, ok := h.Pairs[hashKey]; ok {
+			return pair.Value
+		}
+		return NULL
 	}
 	return NULL
 }

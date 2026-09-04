@@ -163,6 +163,8 @@ func (l *Lexer) NextToken() Token {
 		} else {
 			tok = NewToken(DOT, ".", line, pos)
 		}
+	case '?':
+		tok = NewToken(QUESTION, "?", line, pos)
 	case '(':
 		tok = NewToken(LPAREN, "(", line, pos)
 	case ')':

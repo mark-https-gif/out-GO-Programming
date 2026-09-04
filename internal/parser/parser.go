@@ -60,6 +60,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(lexer.IF, p.parseIfExpression)
 	p.registerPrefix(lexer.WHILE, p.parseWhileExpression)
 	p.registerPrefix(lexer.FOR, p.parseForExpression)
+	p.registerPrefix(lexer.TRY, p.parseTryExpression)
+	p.registerPrefix(lexer.THROW, p.parseThrowExpression)
 
 	p.registerInfix(lexer.PLUS, p.parseInfixExpression)
 	p.registerInfix(lexer.MINUS, p.parseInfixExpression)
@@ -77,6 +79,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(lexer.LPAREN, p.parseCallExpression)
 	p.registerInfix(lexer.LBRACKET, p.ParseIndexExpression)
 	p.registerInfix(lexer.DOUBLECOLON, p.parseColonExpression)
+	p.registerInfix(lexer.QUESTION, p.parseSafeAccessExpression)
 
 	return p
 }
@@ -292,6 +295,24 @@ func (p *Parser) parseColonExpression(left ast.Expression) ast.Expression {
 	return result
 }
 
+func (p *Parser) parseSafeAccessExpression(left ast.Expression) ast.Expression {
+	if left == nil {
+		return nil
+	}
+	p.nextToken()
+	member := p.curToken.Literal
+	p.nextToken()
+	result := &ast.SafeAccess{
+		Token:  p.curToken,
+		Object: left,
+		Member: member,
+	}
+	if p.curTokenIs(lexer.LPAREN) {
+		return p.parseCallExpression(result)
+	}
+	return result
+}
+
 func (p *Parser) parseGroupedExpression() ast.Expression {
 	p.nextToken()
 	exp := p.parseExpression(LOWEST)
@@ -349,6 +370,37 @@ func (p *Parser) parseForExpression() ast.Expression {
 		return nil
 	}
 	expression.Body = p.parseBlockStatement()
+	return expression
+}
+
+func (p *Parser) parseTryExpression() ast.Expression {
+	expression := &ast.TryExpression{Token: p.curToken}
+	if !p.expectPeek(lexer.LBRACE) {
+		return nil
+	}
+	expression.TryBlock = p.parseBlockStatement()
+	if p.peekTokenIs(lexer.CATCH) {
+		p.nextToken()
+		if !p.expectPeek(lexer.LPAREN) {
+			return nil
+		}
+		p.nextToken()
+		expression.CatchVar = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+		if !p.expectPeek(lexer.RPAREN) {
+			return nil
+		}
+		if !p.expectPeek(lexer.LBRACE) {
+			return nil
+		}
+		expression.CatchBlock = p.parseBlockStatement()
+	}
+	return expression
+}
+
+func (p *Parser) parseThrowExpression() ast.Expression {
+	expression := &ast.ThrowExpression{Token: p.curToken}
+	p.nextToken()
+	expression.ReturnValue = p.parseExpression(LOWEST)
 	return expression
 }
 
@@ -519,6 +571,7 @@ var precedences = map[lexer.TokenType]int{
 	lexer.LPAREN:   CALL,
 	lexer.LBRACKET: INDEX,
 	lexer.DOUBLECOLON: CALL,
+	lexer.QUESTION:    CALL,
 }
 
 func (p *Parser) Errors() []string {

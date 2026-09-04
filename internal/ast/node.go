@@ -336,6 +336,47 @@ func (ma *MemberAccess) String() string {
 	return ma.Object.String() + "::" + ma.Member
 }
 
+type TryExpression struct {
+	Token       lexer.Token
+	TryBlock    *BlockStatement
+	CatchVar    *Identifier
+	CatchBlock  *BlockStatement
+}
+
+func (te *TryExpression) expressionNode()      {}
+func (te *TryExpression) TokenLiteral() string { return te.Token.Literal }
+func (te *TryExpression) String() string {
+	var out string
+	out += "try " + te.TryBlock.String()
+	if te.CatchVar != nil {
+		out += " catch(" + te.CatchVar.String() + ") " + te.CatchBlock.String()
+	}
+	return out
+}
+
+type ThrowExpression struct {
+	Token       lexer.Token
+	ReturnValue Expression
+}
+
+func (te *ThrowExpression) expressionNode()      {}
+func (te *ThrowExpression) TokenLiteral() string { return te.Token.Literal }
+func (te *ThrowExpression) String() string {
+	return "throw " + te.ReturnValue.String()
+}
+
+type SafeAccess struct {
+	Token  lexer.Token
+	Object Expression
+	Member string
+}
+
+func (sa *SafeAccess) expressionNode()      {}
+func (sa *SafeAccess) TokenLiteral() string { return sa.Token.Literal }
+func (sa *SafeAccess) String() string {
+	return sa.Object.String() + "?. " + sa.Member
+}
+
 func joinStrings(ss []string, sep string) string {
 	result := ""
 	for i, s := range ss {

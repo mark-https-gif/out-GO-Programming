@@ -39,6 +39,7 @@ const (
 	SEMICOLON   = ";"
 	DOT       = "."
 	DOTDOT    = ".."
+	QUESTION  = "?"
 
 	LPAREN   = "("
 	RPAREN   = ")"
@@ -61,6 +62,9 @@ const (
 	AND    = "and"
 	OR     = "or"
 	IMPORT = "import"
+	TRY    = "try"
+	CATCH  = "catch"
+	THROW  = "throw"
 )
 
 var keywords = map[string]TokenType{
@@ -77,6 +81,9 @@ var keywords = map[string]TokenType{
 	"and":    AND,
 	"or":     OR,
 	"import": IMPORT,
+	"try":    TRY,
+	"catch":  CATCH,
+	"throw":  THROW,
 }
 
 func LookupIdent(ident string) TokenType {

@@ -1,6 +1,6 @@
 # OUT Language · The Go, but with a human face
 
-![Version](https://img.shields.io/badge/version-0.4.0-blue)
+![Version](https://img.shields.io/badge/version-0.5.0-blue)
 ![Go](https://img.shields.io/badge/Go-1.21+-00ADD8)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Status](https://img.shields.io/badge/status-alpha-orange)
@@ -17,7 +17,18 @@ def add(a, b) {
 print(add(2, 3))                  // 5
 print(strings::upper("out rocks")) // OUT ROCKS
 print(math::random_int(1, 100))    // случайное число 1..100
-vibe()                             // good vibes only
+
+# обработка ошибок
+try {
+    throw "что-то пошло не так"
+} catch(e) {
+    print("Ошибка: " + e)
+}
+
+# безопасный доступ
+user = {name: "Bob"}
+print(user?.name)  // Bob
+print(user?.city)  // null (без паники)
 ```
 
 ---
@@ -40,22 +51,47 @@ vibe()                             // good vibes only
 - Переменные, арифметика, строки, числа
 - `if / else`, `while`, `for i in 1..5`
 - Функции `def name(args) {}` и рекурсия
-- Массивы `[1, 2, 3]` и словари `{"name": "Alex"}`
-- Мем-функции: `vibe()`, `yeet()`, `bruh()`, `flex()`, `sus()`
+- Массивы `[1, 2, 3]` и словари `{name: "Bob"}`
 - `import` между `.out` файлами
+- **try / catch / throw** — обработка ошибок
+- **`?.`** — безопасный доступ (возвращает `null` вместо паники)
+- **`#`** — комментарии (как в Python)
+
+### Команды CLI
+```
+out                     # REPL
+out run <file.out>      # запуск скрипта
+out compile <file.out>  # компиляция в standalone .exe
+out get <library>       # скачивание библиотеки с GitHub
+out libs                # список установленных библиотек
+out errors <file.out>   # показ ошибок компиляции
+```
 
 ### Модули (обёртки над Go)
 ```
-strings::   upper, lower, split, join, contains, replace, trim, repeat
-math::      abs, sqrt, sin, cos, round, pow, log, random, pi
-os::        cwd, mkdir, listdir, getenv
-strconv::   atoi, itoa, parse_float, format_float
+strings::   upper, lower, split, join, contains, replace, trim
+math::      abs, sqrt, sin, cos, round, pow, log, pi
+random::    int, float, choice, shuffle, seed
+os::        env, args, system
 json::      parse, stringify
 http::      get, post
-files::     read, write, append, exists, list, mkdir, remove
-crypto::    md5, sha1, sha256, base64_encode, base64_decode
-time::      now, unix, millis, sleep, format
+files::     read, write, exists, remove, list, mkdir
+crypto::    md5, sha1, sha256, encrypt, decrypt
+time::      now, format, timestamp, sleep
+array::     filter, map, reduce, sort, unique, find, any, all
+dict::      keys, values, merge, get
+logging::   debug, info, warn, error
+console::   clear, color, size
+dev::       board, pinMode, digitalWrite, analogRead
 ```
+
+### OUT IDE
+- Подсветка синтаксиса
+- Автосохранение
+- Компиляция в .exe (Ctrl+B)
+- Проверка ошибок (Ctrl+T)
+- Встроенные библиотеки (панель справа)
+- Копирование ошибок (Ctrl+E)
 
 ---
 
@@ -72,33 +108,10 @@ go build -o out.exe ./cmd/out/
 
 # запустить скрипт
 ./out.exe run examples/hello.out
+
+# скомпилировать в standalone .exe
+./out.exe compile myapp.out myapp.exe
 ```
-
----
-
-## 🖥️ REPL (живая консоль)
-
-Запусти `./out.exe` и сразу экспериментируй:
-
-```text
->> 1 + 2
-= 3
-
->> "a" + "b"
-= ab
-
->> def square(n) { return n * n }
->> square(9)
-= 81
-
->> [1, 2, 3].len
-= 3
-
->> math::random_int(1, 100)
-= 42
-```
-
-Введи `exit` чтобы выйти.
 
 ---
 
@@ -107,13 +120,12 @@ go build -o out.exe ./cmd/out/
 | Пример | Описание |
 |--------|----------|
 | `examples/hello.out` | Основы синтаксиса |
-| `examples/modules.out` | Встроенные Go-модули |
+| `examples/modules.out` | Встроенные модули |
 | `examples/import_demo.out` | Импорт между файлами |
-| `examples/utils.out` | Библиотека переиспользуемых функций |
 
 ```bash
-out.exe run examples/hello.out
-out.exe run examples/modules.out
+out run examples/hello.out
+out run examples/modules.out
 ```
 
 ---
@@ -124,43 +136,17 @@ out.exe run examples/modules.out
 out-lang/
 ├── cmd/out/            # CLI и REPL (точка входа)
 ├── internal/
-│   ├── lexer/          # токенизация исходного кода
-│   ├── parser/         # построение AST
+│   ├── lexer/          # токенизация (+ # комментарии)
+│   ├── parser/         # построение AST (+ try/catch/throw, ?)
 │   ├── ast/            # узлы синтаксического дерева
-│   ├── eval/           # интерпретатор (обход AST)
-│   ├── module/         # ядро системы модулей (Go-расширения)
+│   ├── eval/           # интерпретатор (+ try/catch/throw, ?)
+│   ├── env/            # области видимости
+│   ├── module/         # ядро системы модулей
 │   ├── object/         # система типов
-│   └── stdlib/         # стандартная библиотека (обёртки над Go)
+│   ├── libs/           # менеджер библиотек (out get)
+│   └── stdlib/         # стандартная библиотека (18 модулей)
+├── libs/               # встроенные .out библиотеки
 └── examples/           # примеры скриптов
-```
-
----
-
-## 🏛️ Архитектура
-
-```
-┌─────────────────────────────────────────────┐
-│             OUT-код (скрипты)               │
-│        import "file.out", def, loops       │
-└─────────────────────────────────────────────┘
-                    │
-                    ▼
-┌─────────────────────────────────────────────┐
-│         Система модулей (module)            │
-│      регистрация и вызов Go-модулей        │
-└─────────────────────────────────────────────┘
-                    │
-                    ▼
-┌─────────────────────────────────────────────┐
-│     Стандартная библиотека (stdlib)        │
-│     обёртки над Go: strings, math, http…   │
-└─────────────────────────────────────────────┘
-                    │
-                    ▼
-┌─────────────────────────────────────────────┐
-│           Go-рантайм (весь Go)             │
-│    горутины, GC, пакеты, экосистема       │
-└─────────────────────────────────────────────┘
 ```
 
 ---
@@ -169,7 +155,7 @@ out-lang/
 
 - [x] **v0.4** — ядро: лексер, парсер, интерпретатор, REPL
 - [x] **v0.4+** — модульная система и стандартная библиотека
-- [ ] **v0.5** — обработка ошибок (`try / catch`, `?` оператор)
+- [x] **v0.5** — обработка ошибок (`try / catch`, `?` оператор)
 - [ ] **v0.6** — расширенные коллекции и методы
 - [ ] **v0.7** — менеджер пакетов
 - [ ] **v1.0** — стабильный релиз + CLI-инструменты
