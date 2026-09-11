@@ -1,0 +1,23 @@
+[
+  {
+    "name": "random",
+    "file": "random.out",
+    "description": "Генерация случайных чисел: int(), float(), choice(), shuffle()",
+    "category": "Математика",
+    "url": "random"
+  },
+  {
+    "name": "mathex",
+    "file": "mathex.out",
+    "description": "Расширенная математика: clamp(), lerp(), fibonacci(), map()",
+    "category": "Математика",
+    "url": "mathex"
+  },
+  {
+    "name": "stringslib",
+    "file": "stringslib.out",
+    "description": "Работа со строками: contains(), replace(), repeat(), reverse()",
+    "category": "Утилиты",
+    "url": "stringslib"
+  }
+]

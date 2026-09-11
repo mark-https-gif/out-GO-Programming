@@ -15,7 +15,7 @@ import (
 	"github.com/out-lang/out/internal/parser"
 )
 
-const VERSION = "v0.5.0"
+const VERSION = "v0.6.0"
 
 const outEmbedMarker = "\n__OUT_EMBED_START__\n"
 const outEmbedEndMarker = "\n__OUT_EMBED_END__\n"

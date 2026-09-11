@@ -62,6 +62,7 @@ const (
 	AND    = "and"
 	OR     = "or"
 	IMPORT = "import"
+	FN     = "fn"
 	TRY    = "try"
 	CATCH  = "catch"
 	THROW  = "throw"
@@ -81,6 +82,7 @@ var keywords = map[string]TokenType{
 	"and":    AND,
 	"or":     OR,
 	"import": IMPORT,
+	"fn":     FN,
 	"try":    TRY,
 	"catch":  CATCH,
 	"throw":  THROW,

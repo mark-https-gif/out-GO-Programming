@@ -62,6 +62,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(lexer.FOR, p.parseForExpression)
 	p.registerPrefix(lexer.TRY, p.parseTryExpression)
 	p.registerPrefix(lexer.THROW, p.parseThrowExpression)
+	p.registerPrefix(lexer.FN, p.parseFunctionLiteral)
 
 	p.registerInfix(lexer.PLUS, p.parseInfixExpression)
 	p.registerInfix(lexer.MINUS, p.parseInfixExpression)
@@ -80,6 +81,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(lexer.LBRACKET, p.ParseIndexExpression)
 	p.registerInfix(lexer.DOUBLECOLON, p.parseColonExpression)
 	p.registerInfix(lexer.QUESTION, p.parseSafeAccessExpression)
+	p.registerInfix(lexer.DOT, p.parseMemberAccessExpression)
 
 	return p
 }
@@ -300,14 +302,33 @@ func (p *Parser) parseSafeAccessExpression(left ast.Expression) ast.Expression {
 		return nil
 	}
 	p.nextToken()
+	if p.curTokenIs(lexer.DOT) {
+		p.nextToken()
+	}
 	member := p.curToken.Literal
-	p.nextToken()
 	result := &ast.SafeAccess{
 		Token:  p.curToken,
 		Object: left,
 		Member: member,
 	}
-	if p.curTokenIs(lexer.LPAREN) {
+	if p.peekTokenIs(lexer.LPAREN) {
+		return p.parseCallExpression(result)
+	}
+	return result
+}
+
+func (p *Parser) parseMemberAccessExpression(left ast.Expression) ast.Expression {
+	if left == nil {
+		return nil
+	}
+	p.nextToken()
+	member := p.curToken.Literal
+	result := &ast.MemberAccess{
+		Token:  p.curToken,
+		Object: left,
+		Member: member,
+	}
+	if p.peekTokenIs(lexer.LPAREN) {
 		return p.parseCallExpression(result)
 	}
 	return result
@@ -381,15 +402,17 @@ func (p *Parser) parseTryExpression() ast.Expression {
 	expression.TryBlock = p.parseBlockStatement()
 	if p.peekTokenIs(lexer.CATCH) {
 		p.nextToken()
-		if !p.expectPeek(lexer.LPAREN) {
-			return nil
-		}
-		p.nextToken()
-		expression.CatchVar = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
-		if !p.expectPeek(lexer.RPAREN) {
-			return nil
-		}
-		if !p.expectPeek(lexer.LBRACE) {
+		if p.peekTokenIs(lexer.LPAREN) {
+			p.nextToken()
+			p.nextToken()
+			expression.CatchVar = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+			if !p.expectPeek(lexer.RPAREN) {
+				return nil
+			}
+			if !p.expectPeek(lexer.LBRACE) {
+				return nil
+			}
+		} else if !p.expectPeek(lexer.LBRACE) {
 			return nil
 		}
 		expression.CatchBlock = p.parseBlockStatement()
@@ -454,6 +477,9 @@ func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 
 func (p *Parser) parseCallExpression(fn ast.Expression) ast.Expression {
 	exp := &ast.CallExpression{Token: p.curToken, Function: fn}
+	if p.peekTokenIs(lexer.LPAREN) {
+		p.nextToken()
+	}
 	exp.Arguments = p.parseExpressionList(lexer.RPAREN)
 	return exp
 }
@@ -572,6 +598,7 @@ var precedences = map[lexer.TokenType]int{
 	lexer.LBRACKET: INDEX,
 	lexer.DOUBLECOLON: CALL,
 	lexer.QUESTION:    CALL,
+	lexer.DOT:         CALL,
 }
 
 func (p *Parser) Errors() []string {

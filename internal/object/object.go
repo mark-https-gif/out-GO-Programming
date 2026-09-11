@@ -22,6 +22,7 @@ const (
 	BUILTIN_OBJ  = "BUILTIN"
 	ARRAY_OBJ    = "ARRAY"
 	HASH_OBJ     = "HASH"
+	METHOD_OBJ   = "METHOD"
 )
 
 type Object interface {
@@ -178,3 +179,11 @@ func IsHashable(obj Object) bool {
 		return false
 	}
 }
+
+type BuiltinMethod struct {
+	Receiver Object
+	Method   string
+}
+
+func (b *BuiltinMethod) Type() ObjectType { return METHOD_OBJ }
+func (b *BuiltinMethod) Inspect() string  { return "method." + b.Method }

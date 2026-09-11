@@ -386,9 +386,12 @@ func evalIfExpression(node *ast.IfExpression, e *env.Environment) object.Object 
 
 func evalTryExpression(node *ast.TryExpression, e *env.Environment) object.Object {
 	result := Eval(node.TryBlock, e)
-	if result != nil && node.CatchVar != nil && result.Type() == object.ERROR_OBJ {
-		catchEnv := env.NewEnclosed(e)
-		catchEnv.Set(node.CatchVar.Value, result)
+	if result != nil && result.Type() == object.ERROR_OBJ {
+		catchEnv := e
+		if node.CatchVar != nil {
+			catchEnv = env.NewEnclosed(e)
+			catchEnv.Set(node.CatchVar.Value, result)
+		}
 		catchResult := Eval(node.CatchBlock, catchEnv)
 		if catchResult != nil && catchResult.Type() == object.ERROR_OBJ {
 			return catchResult
@@ -492,9 +495,6 @@ func evalExpressions(exps []ast.Expression, e *env.Environment) []object.Object 
 	var result []object.Object
 	for _, exp := range exps {
 		evaluated := Eval(exp, e)
-		if isError(evaluated) {
-			return []object.Object{evaluated}
-		}
 		result = append(result, evaluated)
 	}
 	return result
@@ -508,6 +508,8 @@ func applyFunction(fn object.Object, args []object.Object) object.Object {
 		return unwrapReturnValue(evaluated)
 	case *object.BuiltinFunction:
 		return fn.Fn(args...)
+	case *object.BuiltinMethod:
+		return dispatchMethod(fn.Receiver, fn.Method, args)
 	default:
 		return newError("not a function: %s", fn.Type())
 	}
@@ -603,32 +605,17 @@ func evalMemberAccess(left object.Object, member string) object.Object {
 			}
 			return NULL
 		default:
-			return newError("unknown array member: %s", member)
+			return &object.BuiltinMethod{Receiver: left, Method: member}
 		}
 	case *object.String:
 		switch member {
 		case "len":
 			return &object.Integer{Value: int64(len(obj.Value))}
 		default:
-			return newError("unknown string member: %s", member)
+			return &object.BuiltinMethod{Receiver: left, Method: member}
 		}
 	case *object.Hash:
-		switch member {
-		case "keys":
-			keys := []object.Object{}
-			for _, pair := range obj.Pairs {
-				keys = append(keys, pair.Key)
-			}
-			return &object.Array{Elements: keys}
-		case "values":
-			vals := []object.Object{}
-			for _, pair := range obj.Pairs {
-				vals = append(vals, pair.Value)
-			}
-			return &object.Array{Elements: vals}
-		default:
-			return newError("unknown hash member: %s", member)
-		}
+		return &object.BuiltinMethod{Receiver: left, Method: member}
 	default:
 		return newError("member access not supported on %s", left.Type())
 	}
