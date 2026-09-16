@@ -1,0 +1,6 @@
+import "disk"
+
+test_file = "C:/Users/7349~1/AppData/Local/Temp/outtest/disk_handle_test2.bin"
+
+sz = disk::size(test_file)
+print("size:", sz)

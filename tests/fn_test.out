@@ -1,0 +1,2 @@
+double = [1, 2, 3].map(fn(x) { return x * 2 })
+print(double)

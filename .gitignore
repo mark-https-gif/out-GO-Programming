@@ -6,6 +6,13 @@ out.exe
 # Go build artifacts
 *.test
 *.out
+!tests/*.out
+
+# Python
+__pycache__/
+*.egg-info/
+dist/
+build/
 
 # Temp / OS files
 Thumbs.db

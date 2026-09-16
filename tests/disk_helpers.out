@@ -1,0 +1,9 @@
+import "disk"
+
+// invalid handle error is catchable
+try {
+  disk::close(999)
+  print("expected error!")
+} catch (e) {
+  print("caught:", e)
+}

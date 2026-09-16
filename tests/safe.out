@@ -1,0 +1,4 @@
+import "json"
+
+data = json::parse('{"name": "OUT", "version": 0.6}')
+print(data?.name)

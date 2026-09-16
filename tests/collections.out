@@ -1,0 +1,92 @@
+// v0.6 collections test
+nums = [1, 2, 3, 4, 5]
+
+print("len:", nums.len)
+print("first:", nums.first)
+print("last:", nums.last)
+
+double = nums.map(fn(x) { return x * 2 })
+print("map *2:", double)
+
+even = nums.filter(fn(x) { return x % 2 == 0 })
+print("filter even:", even)
+
+sum = nums.reduce(fn(a, b) { return a + b }, 0)
+print("reduce sum:", sum)
+
+sorted = [3, 1, 2].sort()
+print("sort:", sorted)
+
+reversed = nums.reverse()
+print("reverse:", reversed)
+
+sliced = nums.slice(1, 3)
+print("slice(1,3):", sliced)
+
+pushed = nums.push(6, 7)
+print("push:", pushed)
+
+popped = nums.pop()
+print("pop:", popped)
+
+removed = nums.remove(1)
+print("remove(1):", removed)
+
+unique = [1, 2, 2, 3, 3, 3].unique()
+print("unique:", unique)
+
+has3 = nums.contains(3)
+print("contains 3:", has3)
+
+idx = nums.index_of(4)
+print("index_of 4:", idx)
+
+found = nums.find(fn(x) { return x > 3 })
+print("find >3:", found)
+
+any_gt4 = nums.any(fn(x) { return x > 4 })
+print("any >4:", any_gt4)
+
+all_pos = nums.all(fn(x) { return x > 0 })
+print("all >0:", all_pos)
+
+nums.each(fn(x) { print("each:", x) })
+
+// strings
+s = "Hello World"
+print("s.upper:", s.upper())
+print("s.lower:", s.lower())
+print("s.contains 'World':", s.contains("World"))
+print("s.replace:", s.replace("World", "OUT"))
+print("s.trim:", "  hi  ".trim())
+print("s.starts_with 'He':", s.starts_with("He"))
+print("s.ends_with 'ld':", s.ends_with("ld"))
+print("s.repeat(2):", "ab".repeat(2))
+print("reverse:", "out".reverse())
+print("charAt(1):", s.charAt(1))
+print("substring(0,5):", s.substring(0, 5))
+print("indexOf 'o':", s.index_of("o"))
+parts = s.split(" ")
+print("split:", parts)
+
+// dict
+d = {name: "OUT", age: 3, lang: "Go"}
+print("d.keys:", d.keys())
+print("d.values:", d.values())
+print("d.size:", d.size())
+print("d.has 'name':", d.has("name"))
+print("d.entries:", d.entries())
+
+// catch without variable
+try {
+    throw "boom"
+} catch {
+    print("caught without var!")
+}
+
+// catch with variable
+try {
+    throw "kaboom"
+} catch (err) {
+    print("caught:", err)
+}

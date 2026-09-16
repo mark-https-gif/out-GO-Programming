@@ -1,0 +1,25 @@
+import "json"
+
+data = json::parse('{"name": "OUT", "version": 0.6}')
+print(data?.name)
+print(data?.missing)
+
+def divide(a, b) {
+    if b == 0 {
+        throw "division by zero"
+    }
+    return a / b
+}
+
+try {
+    x = divide(10, 0)
+} catch (err) {
+    print("Error:", err)
+}
+
+try {
+    y = divide(10, 2)
+    print("y =", y)
+} catch {
+    print("should not happen")
+}
