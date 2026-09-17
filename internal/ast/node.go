@@ -274,6 +274,29 @@ func (ie *IndexExpression) String() string {
 	return "(" + ie.Left.String() + "[" + ie.Index.String() + "])"
 }
 
+type SliceExpression struct {
+	Token lexer.Token
+	Left  Expression
+	Low   Expression
+	High  Expression
+}
+
+func (se *SliceExpression) expressionNode()      {}
+func (se *SliceExpression) TokenLiteral() string { return se.Token.Literal }
+func (se *SliceExpression) String() string {
+	var out string
+	out += "(" + se.Left.String() + "["
+	if se.Low != nil {
+		out += se.Low.String()
+	}
+	out += ":"
+	if se.High != nil {
+		out += se.High.String()
+	}
+	out += "])"
+	return out
+}
+
 type AssignExpression struct {
 	Token lexer.Token
 	Name  *Identifier

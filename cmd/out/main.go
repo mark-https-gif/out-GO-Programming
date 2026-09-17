@@ -196,6 +196,7 @@ func showErrors(filename string) {
 	if err := os.WriteFile("last_error.txt", []byte(clipboard), 0644); err == nil {
 		fmt.Println("\n[Saved to last_error.txt]")
 	}
+	os.Exit(1)
 }
 
 func runFile(filename string) {

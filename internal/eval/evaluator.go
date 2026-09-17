@@ -134,6 +134,25 @@ func Eval(node ast.Node, e *env.Environment) object.Object {
 			return index
 		}
 		return evalIndexExpression(left, index)
+	case *ast.SliceExpression:
+		left := Eval(node.Left, e)
+		if isError(left) {
+			return left
+		}
+		var low, high object.Object
+		if node.Low != nil {
+			low = Eval(node.Low, e)
+			if isError(low) {
+				return low
+			}
+		}
+		if node.High != nil {
+			high = Eval(node.High, e)
+			if isError(high) {
+				return high
+			}
+		}
+		return evalSliceExpression(left, low, high)
 	case *ast.MemberAccess:
 		if ident, ok := node.Object.(*ast.Identifier); ok {
 			if m := lookupModuleMember(ident.Value, node.Member); m != nil {
@@ -538,11 +557,73 @@ func evalIndexExpression(left, index object.Object) object.Object {
 	switch {
 	case left.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ:
 		return evalArrayIndexExpression(left, index)
+	case left.Type() == object.STRING_OBJ && index.Type() == object.INTEGER_OBJ:
+		return evalStringIndexExpression(left, index)
 	case left.Type() == object.HASH_OBJ:
 		return evalHashIndexExpression(left, index)
 	default:
-		return newError("index operator not supported: %s", left.Type())
+		return newError("index operator not supported: %s[%s]", left.Type(), index.Type())
 	}
+}
+
+func evalStringIndexExpression(str, index object.Object) object.Object {
+	strObject := str.(*object.String)
+	idx := index.(*object.Integer).Value
+	max := int64(len(strObject.Value) - 1)
+	if idx < 0 || idx > max {
+		return NULL
+	}
+	return &object.String{Value: string(strObject.Value[idx])}
+}
+
+func evalSliceExpression(left, low, high object.Object) object.Object {
+	switch obj := left.(type) {
+	case *object.String:
+		l := int64(len(obj.Value))
+		lo, hi, ok := sliceBounds(low, high, l)
+		if !ok {
+			return NULL
+		}
+		return &object.String{Value: obj.Value[lo:hi]}
+	case *object.Array:
+		l := int64(len(obj.Elements))
+		lo, hi, ok := sliceBounds(low, high, l)
+		if !ok {
+			return NULL
+		}
+		return &object.Array{Elements: append([]object.Object{}, obj.Elements[lo:hi]...)}
+	default:
+		return newError("slice operator not supported: %s", left.Type())
+	}
+}
+
+func sliceBounds(low, high object.Object, length int64) (int64, int64, bool) {
+	lo := int64(0)
+	if low != nil {
+		iv, ok := low.(*object.Integer)
+		if !ok {
+			return 0, 0, false
+		}
+		lo = iv.Value
+	}
+	hi := length
+	if high != nil {
+		iv, ok := high.(*object.Integer)
+		if !ok {
+			return 0, 0, false
+		}
+		hi = iv.Value
+	}
+	if lo < 0 {
+		lo = 0
+	}
+	if hi > length {
+		hi = length
+	}
+	if lo > hi {
+		lo = hi
+	}
+	return lo, hi, true
 }
 
 func evalArrayIndexExpression(array, index object.Object) object.Object {

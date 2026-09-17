@@ -27,6 +27,7 @@ var builtins = map[string]*object.BuiltinFunction{
 	"bruh":   {Fn: builtinBruh},
 	"howl":   {Fn: builtinHowl},
 	"echo":   {Fn: builtinEcho},
+	"println": {Fn: builtinPrintln},
 	"math::abs":    {Fn: builtinMathAbs},
 	"math::sqrt":   {Fn: builtinMathSqrt},
 	"math::max":    {Fn: builtinMathMax},
@@ -66,6 +67,19 @@ func builtinEcho(args ...object.Object) object.Object {
 			fmt.Print(" ")
 		}
 		fmt.Print(arg.Inspect())
+	}
+	fmt.Println()
+	return NULL
+}
+
+func builtinPrintln(args ...object.Object) object.Object {
+	if len(args) > 0 {
+		for i, arg := range args {
+			if i > 0 {
+				fmt.Print(" ")
+			}
+			fmt.Print(arg.Inspect())
+		}
 	}
 	fmt.Println()
 	return NULL

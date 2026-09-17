@@ -126,14 +126,45 @@ func strconvModule() *module.Module {
 		}
 		return &object.Float{Value: f}
 	}).Set("format_float", func(args ...object.Object) object.Object {
-		if len(args) != 1 {
-			return errObj("strconv::format_float expects 1 argument")
+		// format_float(value) or format_float(layout, value) or format_float(layout, value, precision)
+		var fmtByte byte = 'f'
+		prec := -1
+		var fv float64
+		switch len(args) {
+		case 1:
+			fl, ok := args[0].(*object.Float)
+			if !ok {
+				return errObj("strconv::format_float expects FLOAT")
+			}
+			fv = fl.Value
+		case 2, 3:
+			layout, ok := args[0].(*object.String)
+			if !ok {
+				return errObj("strconv::format_float layout must be STRING")
+			}
+			if len(layout.Value) == 0 {
+				return errObj("strconv::format_float layout must not be empty")
+			}
+			fmtByte = layout.Value[0]
+			switch v := args[1].(type) {
+			case *object.Float:
+				fv = v.Value
+			case *object.Integer:
+				fv = float64(v.Value)
+			default:
+				return errObj("strconv::format_float expects FLOAT value")
+			}
+			if len(args) == 3 {
+				p, ok := args[2].(*object.Integer)
+				if !ok {
+					return errObj("strconv::format_float precision must be INTEGER")
+				}
+				prec = int(p.Value)
+			}
+		default:
+			return errObj("strconv::format_float expects 1 to 3 arguments")
 		}
-		fv, ok := args[0].(*object.Float)
-		if !ok {
-			return errObj("strconv::format_float expects FLOAT")
-		}
-		return &object.String{Value: strconv.FormatFloat(fv.Value, 'f', -1, 64)}
+		return &object.String{Value: strconv.FormatFloat(fv, fmtByte, prec, 64)}
 	})
 	m.Desc = "String number conversions (wraps Go strconv package)"
 	return m

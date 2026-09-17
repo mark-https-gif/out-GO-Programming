@@ -1,0 +1,17 @@
+iso = "iso8601"
+print(iso[0])
+print(iso[3])
+print(iso[len(iso)-1])
+print(iso[1:len(iso)-1])
+print(iso[:3])
+print(iso[3:])
+print(iso[:])
+
+arr = [10, 20, 30, 40, 50]
+print(arr[1:3])
+
+print(strconv::format_float(3.7))
+print(strconv::format_float("f", 3.14159))
+print(strconv::format_float("f", 3.14159, 2))
+print(strconv::format_float("e", 12345.678))
+print(strconv::format_float("g", 0.00001234, 2))

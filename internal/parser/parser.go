@@ -98,15 +98,27 @@ func (p *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
 
+	sawNonImport := false
 	for !p.curTokenIs(lexer.EOF) {
+		if p.curTokenIs(lexer.IMPORT) && sawNonImport {
+			p.importsNotAtTop(p.curToken)
+		}
 		stmt := p.parseStatement()
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
+			if _, isImport := stmt.(*ast.ImportStatement); !isImport {
+				sawNonImport = true
+			}
 		}
 		p.nextToken()
 	}
 
 	return program
+}
+
+func (p *Parser) importsNotAtTop(tok lexer.Token) {
+	msg := fmt.Sprintf("line %d:%d - imports must appear at the top of the file", tok.Line, tok.Pos)
+	p.errors = append(p.errors, msg)
 }
 
 func (p *Parser) parseStatement() ast.Statement {
@@ -504,8 +516,36 @@ func (p *Parser) parseExpressionList(end lexer.TokenType) []ast.Expression {
 }
 
 func (p *Parser) ParseIndexExpression(left ast.Expression) ast.Expression {
-	exp := &ast.IndexExpression{Token: p.curToken, Left: left}
+	tok := p.curToken
 	p.nextToken()
+	if p.curTokenIs(lexer.COLON) {
+		slice := &ast.SliceExpression{Token: tok, Left: left}
+		if p.peekTokenIs(lexer.RBRACKET) {
+			p.nextToken()
+			return slice
+		}
+		p.nextToken()
+		slice.High = p.parseExpression(LOWEST)
+		if !p.expectPeek(lexer.RBRACKET) {
+			return nil
+		}
+		return slice
+	}
+	if p.peekTokenIs(lexer.COLON) {
+		slice := &ast.SliceExpression{Token: tok, Left: left}
+		slice.Low = p.parseExpression(LOWEST)
+		p.nextToken()
+		p.nextToken()
+		if p.curTokenIs(lexer.RBRACKET) {
+			return slice
+		}
+		slice.High = p.parseExpression(LOWEST)
+		if !p.expectPeek(lexer.RBRACKET) {
+			return nil
+		}
+		return slice
+	}
+	exp := &ast.IndexExpression{Token: tok, Left: left}
 	exp.Index = p.parseExpression(LOWEST)
 	if !p.expectPeek(lexer.RBRACKET) {
 		return nil

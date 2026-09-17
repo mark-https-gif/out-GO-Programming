@@ -1,0 +1,3 @@
+print("a\rb")
+print("block:\u2588")
+print("unicode \u0041\u2603 done")

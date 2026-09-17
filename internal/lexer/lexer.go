@@ -256,10 +256,18 @@ func (l *Lexer) readString(quote byte) string {
 				result = append(result, '\n')
 			case 't':
 				result = append(result, '\t')
+			case 'r':
+				result = append(result, '\r')
 			case '\\':
 				result = append(result, '\\')
 			case quote:
 				result = append(result, quote)
+			case 'u':
+				l.readChar()
+				if code, ok := l.readHex4(); ok {
+					result = append(result, []byte(string(rune(code)))...)
+				}
+				continue
 			default:
 				result = append(result, '\\', l.ch)
 			}
@@ -273,6 +281,32 @@ func (l *Lexer) readString(quote byte) string {
 		l.readChar()
 	}
 	return string(result)
+}
+
+func (l *Lexer) readHex4() (int, bool) {
+	code := 0
+	for i := 0; i < 4; i++ {
+		d := hexDigit(l.ch)
+		if d < 0 {
+			return 0, false
+		}
+		code = code<<4 | d
+		l.readChar()
+	}
+	return code, true
+}
+
+func hexDigit(ch byte) int {
+	switch {
+	case '0' <= ch && ch <= '9':
+		return int(ch - '0')
+	case 'a' <= ch && ch <= 'f':
+		return int(ch-'a') + 10
+	case 'A' <= ch && ch <= 'F':
+		return int(ch-'A') + 10
+	default:
+		return -1
+	}
 }
 
 func NewToken(tokenType TokenType, literal string, line, pos int) Token {
