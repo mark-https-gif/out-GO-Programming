@@ -1,0 +1,18 @@
+import "audio"
+import "time"
+
+h = audio::record_init(8000, 1)
+i = 0
+total = 0
+while (i < 10) {
+    time::sleep(0.2)
+    data = audio::record_take(h)
+    if (data != null) {
+        total = total + len(data)
+        println("take", i, "bytes=", len(data), "total=", total)
+    } else {
+        println("take", i, "none")
+    }
+    i = i + 1
+}
+audio::record_stop(h)

@@ -1,0 +1,17 @@
+import "net"
+
+host = net::hostname()
+ip = net::local_ip()
+println("hostname:", host)
+println("local_ip:", ip)
+
+recv = net::udp_open(45999)
+send = net::udp_open(0)
+net::set_timeout(recv, 1000)
+
+net::udp_send(send, "127.0.0.1", 45999, "hello-voip")
+got = net::udp_recv(recv, 4096)
+println("udp got:", got)
+
+net::udp_close(recv)
+net::udp_close(send)

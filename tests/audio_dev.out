@@ -1,0 +1,18 @@
+import "audio"
+import "time"
+
+d = 0
+while (d < 4) {
+    try {
+        h = audio::record_init(8000, 1, d)
+        time::sleep(0.3)
+        data = audio::record_take(h)
+        n = 0
+        if (data != null) { n = len(data) }
+        println("dev", d, ": OK bytes=", n)
+        audio::record_stop(h)
+    } catch (e) {
+        println("dev", d, ": error")
+    }
+    d = d + 1
+}

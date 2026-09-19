@@ -1,0 +1,29 @@
+import "internet"
+import "time"
+
+h = internet::server_create(45997, "tcp")
+println("server handle:", h, "port:", internet::server_port(h))
+wait = 0
+msg = null
+while (wait < 40) {
+    if (msg == null) {
+        tmp = internet::server_poll(h)
+        if (tmp != null) {
+            msg = tmp
+            wait = 50
+        }
+    }
+    if (wait < 40) {
+        time::sleep(0.1)
+        wait = wait + 1
+    }
+}
+if (msg == null) {
+    println("server: no msg after", wait, "ticks; clients:", internet::server_clients(h))
+} else {
+    println("server: client", msg["client"], "got:", msg["data"], "clients:", internet::server_clients(h))
+    r = internet::server_send(h, msg["client"], "pong")
+    println("server: send ->", r, "broadcast ->", internet::server_broadcast(h, "to-all"))
+}
+internet::server_stop(h)
+println("done")

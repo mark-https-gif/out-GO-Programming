@@ -1,4 +1,4 @@
-File: test_syntax_error.out
+File: tests\import_mid.out
 Errors: 1
 
-1) line 4:1 - no prefix parse function for } found
+1) line 2:1 - imports must appear at the top of the file

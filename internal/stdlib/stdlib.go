@@ -35,6 +35,9 @@ func RegisterAll(reg *module.Registry) {
 	reg.Register(dictModule())
 	reg.Register(loggingModule())
 	reg.Register(diskModule())
+	reg.Register(netModule())
+	reg.Register(audioModule())
+	reg.Register(internetModule())
 }
 
 func osModule() *module.Module {

@@ -1,0 +1,28 @@
+import "audio"
+import "time"
+
+devs = audio::devices()
+println("audio devices:", len(devs))
+i = 0
+while (i < len(devs)) {
+    println("  ", devs[i])
+    i = i + 1
+}
+
+h = audio::record_init(8000, 1)
+time::sleep(0.5)
+data = audio::record_take(h)
+if (data == null) {
+    println("record: no data yet")
+} else {
+    println("record: captured bytes =", len(data))
+}
+time::sleep(0.3)
+data2 = audio::record_take(h)
+if (data2 == null) {
+    println("record2: no data")
+} else {
+    println("record2: captured bytes =", len(data2))
+}
+audio::record_stop(h)
+println("stopped OK")
