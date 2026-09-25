@@ -1,8 +1,11 @@
-//go:build !windows
+//go:build !windows && !linux
 
 package stdlib
 
-import "github.com/out-lang/out/internal/module"
+import (
+	"github.com/out-lang/out/internal/module"
+	"github.com/out-lang/out/internal/object"
+)
 
 func audioModule() *module.Module {
 	m := module.New("audio")

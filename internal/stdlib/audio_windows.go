@@ -203,6 +203,9 @@ func (r *recorder) recordLoop() {
 				r.buf = append(r.buf, chunk...)
 			}
 			setHdrFlags(r.hdrBufs[i], 0)
+			// Re-prepare the header so the driver accepts the buffer again.
+			pWaveInUnprepareHeader.Call(r.handle, uintptr(unsafe.Pointer(&r.hdrBufs[i][0])), hdrSz)
+			pWaveInPrepareHeader.Call(r.handle, uintptr(unsafe.Pointer(&r.hdrBufs[i][0])), hdrSz)
 			pWaveInAddBuffer.Call(r.handle, uintptr(unsafe.Pointer(&r.hdrBufs[i][0])), hdrSz)
 		}
 		r.mu.Unlock()
