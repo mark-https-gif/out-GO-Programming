@@ -1,4 +1,0 @@
-File: tests\import_mid.out
-Errors: 1
-
-1) line 2:1 - imports must appear at the top of the file

@@ -1,0 +1,21 @@
+i = 0
+sel = -1
+while (i < 3) {
+    d = i
+    if (d > 1) {
+        if (d != 2) {
+            sel = i
+        }
+    }
+    i = i + 1
+}
+println("sel:", sel)
+a = 0
+if (a == 0) {
+    b = 1
+    if (b == 1) {
+        println("inner ok")
+        return
+    }
+}
+println("outer ok")

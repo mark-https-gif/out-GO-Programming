@@ -1,0 +1,7 @@
+a =  Rostov
+a = 0
+if (a == 0) {
+    println("x")
+    return
+}
+println("y")

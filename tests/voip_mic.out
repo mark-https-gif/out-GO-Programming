@@ -1,0 +1,39 @@
+import "audio"
+import "time"
+
+devs = audio::devices()
+println("devices:", len(devs))
+sel = -1
+i = 0
+while (i < len(devs)) {
+    d = devs[i]
+    if (d["in"] == true) {
+        if (d["name"] != "LINE_IN 3- USB Audio") {
+            sel = i
+        }
+    }
+    i = i + 1
+}
+println("chosen input:", sel)
+r = audio::record_init(8000, 1, sel)
+if (r != null) {
+    println("record_init err:", r)
+    return
+}
+println("recording...")
+take = 0
+sum = 0
+while (take < 5) {
+    data = audio::record_take()
+    if (data == null) {
+        println("take", take, "-> null (blocked?)")
+    } else {
+        block = data["pcm"]
+        println("take", take, "len", len(block), "play ->", audio::play(block, 8000, 1))
+        sum = sum + len(block)
+    }
+    time::sleep(0.2)
+    take = take + 1
+}
+audio::record_stop()
+println("total captured:", sum)

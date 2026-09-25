@@ -1,6 +1,6 @@
 # OUT Language · The Go, but with a human face
 
-![Version](https://img.shields.io/badge/version-0.5.0-blue)
+![Version](https://img.shields.io/badge/version-0.6.0-blue)
 ![Go](https://img.shields.io/badge/Go-1.21+-00ADD8)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Status](https://img.shields.io/badge/status-alpha-orange)
@@ -67,6 +67,21 @@ out libs                # список установленных библиот
 out errors <file.out>   # показ ошибок компиляции
 ```
 
+### Установка
+
+```
+# Вариант 1: готовый бинарник
+#   Windows — out.exe, Linux — out_linux (статический ELF)
+
+# Вариант 2: pip-обёртка (ставит ту же Go-реализацию)
+pip install out-lang
+out run file.out
+```
+
+`out_lang_cli.py` — это тонкая обёртка: она находит бинарник `out`/`out.exe`
+в каталоге пакета и передаёт ему аргументы. Вся работа интерпретатора
+выполняется Go-кодом, Python ничего не интерпретирует.
+
 ### Модули (обёртки над Go)
 ```
 strings::   upper, lower, split, join, contains, replace, trim
@@ -83,6 +98,9 @@ dict::      keys, values, merge, get
 logging::   debug, info, warn, error
 console::   clear, color, size
 dev::       board, pinMode, digitalWrite, analogRead
+net::       UDP/TCP сокеты
+audio::     запись и воспроизведение (Windows: waveIn/waveOut, Linux: ALSA)
+internet::  public_ip, DNS, скан портов, TCP/UDP-сервер, broadcast
 ```
 
 ### OUT IDE
@@ -156,9 +174,9 @@ out-lang/
 - [x] **v0.4** — ядро: лексер, парсер, интерпретатор, REPL
 - [x] **v0.4+** — модульная система и стандартная библиотека
 - [x] **v0.5** — обработка ошибок (`try / catch`, `?` оператор)
-- [ ] **v0.6** — расширенные коллекции и методы
+- [x] **v0.6** — расширенные коллекции, строки (индексация/срез), модули `net::` / `audio::` / `internet::`
 - [ ] **v0.7** — менеджер пакетов
-- [ ] **v1.0** — стабильный релиз + CLI-инструменты
+- [ ] **v1.0** — стабильный релиз
 
 ---
 

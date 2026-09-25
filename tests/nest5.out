@@ -1,0 +1,7 @@
+a = ?
+a = 0
+if (a == 0) {
+    println("before return")
+    return
+}
+println("after")

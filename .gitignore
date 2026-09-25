@@ -19,3 +19,6 @@ Thumbs.db
 .DS_Store
 *.log
 tmp_test.txt
+last_error.txt
+out_linux
+out_linux_exe
