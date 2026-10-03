@@ -1,0 +1,11 @@
+dev::board("esp8266")
+print(dev::info())
+
+dev::pinMode(2, "OUTPUT")
+dev::digitalWrite(2, 1)
+
+dev::pinMode(16, "OUTPUT")
+dev::digitalWrite(16, 0)
+
+temp = dev::analogRead(0)
+print("A0 = " + str(temp))

@@ -3,6 +3,8 @@ package dev
 import (
 	"fmt"
 	"strings"
+	"time"
+
 	"github.com/out-lang/out/internal/module"
 	"github.com/out-lang/out/internal/object"
 )
@@ -444,7 +446,11 @@ func Module() *module.Module {
 		if !ok {
 			return &object.Error{Message: "dev::delay expects INTEGER (milliseconds)"}
 		}
+		if ms.Value < 0 {
+			return &object.Error{Message: "dev::delay expects non-negative milliseconds"}
+		}
 		fmt.Printf("[dev] delay(%dms)\n", ms.Value)
+		time.Sleep(time.Duration(ms.Value) * time.Millisecond)
 		return &object.Null{}
 	})
 
